@@ -4,6 +4,7 @@ MiceAmaze
 MiceAmaze is a free video game that features a maze with mice and snakes.
 
 Forked from: https://github.com/rchampeimont/miceamaze
+
 Official website: http://www.miceamaze.org/
 
 Has been converted to SDL2
