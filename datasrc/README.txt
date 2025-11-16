@@ -1,1 +1,0 @@
-Data source files, ie. files not distributed to the users but used by the developpers.
