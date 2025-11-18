@@ -121,6 +121,27 @@ void RenderFlatText::reinit() {
 		Functions::error("error loading font (wglUseFontOutlines)");
 	}
 #endif
+#ifdef FONT_GLC
+    ctx = glcGenContext();
+    glcContext(ctx);
+
+	glcEnable(GLC_GL_OBJECTS);
+	glcEnable(GLC_MIPMAP);
+	glcEnable(GLC_HINTING_QSO);
+	glcEnable(GLC_KERNING_QSO);
+	glcRenderStyle(GLC_TRIANGLE);
+
+	glEnable(GL_POLYGON_SMOOTH);
+	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	defaultFont = glcGenFontID();
+	glcAppendCatalog((Program::getInstance()->dataPath + "/fonts").c_str());
+	Functions::verify(glcNewFontFromFamily(defaultFont, "DejaVu Sans"), "could not load font (glcNewFontFromFamily error)");
+	Functions::verify(glcFontFace(defaultFont, "Book") == GL_TRUE, "could not load font (glcFontFace error)");
+	glcFont(defaultFont);
+#endif
 }
 
 // align: -1 = left (original position = left of the text)

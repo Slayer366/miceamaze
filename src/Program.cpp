@@ -67,15 +67,18 @@ Program::Program(int _argc, char *_argv[]) {
 
 // Called when changing video settings
 void Program::reinitVideo() {
+	if (window != NULL) {
+		SDL_DestroyWindow(window);
+		window = NULL;
+	}
+	if(glContext != NULL) {
+		SDL_GL_DeleteContext(glContext);
+		glContext = NULL;
+	}
 	initVideo();
-#ifdef _WIN32
-	// On Windows, SDL_SetVideoMode unloads the textures
-	// so we need to reload them. On Linux, it doesn't
-	// so we mustn't load them a second time (otherwise memory leak!).
 	initVideoCounter++;
 	loadAllTextures();
 	RenderFlatText::reinit();
-#endif
 }
 
 void Program::loadAllTextures() {
@@ -124,14 +127,6 @@ SDL_Cursor *Program::init_system_cursor(const char *image[]) {
 // resize = initVideo() is called as the result of a
 // window resize, therefore it should not "decide" the window size
 void Program::initVideo() {
-
-    // --- Destroy old window/context if reinitializing ---
-    if (window != NULL) {
-        SDL_GL_DeleteContext(glContext);
-        SDL_DestroyWindow(window);
-        window = NULL;
-    }
-
 	Uint32 windowFlags = SDL_WINDOW_OPENGL;
 
 	if (fullscreen) {
@@ -141,9 +136,9 @@ void Program::initVideo() {
 		screenHeight = nativeResolution.y;
 	} else {
 		windowFlags |= SDL_WINDOW_RESIZABLE;
-        screenWidth  = resizedWindow.x ? resizedWindow.x : DEFAULT_WIDTH;
-        screenHeight = resizedWindow.y ? resizedWindow.y : DEFAULT_HEIGHT;
-    }
+		screenWidth  = resizedWindow.x ? resizedWindow.x : DEFAULT_WIDTH;
+		screenHeight = resizedWindow.y ? resizedWindow.y : DEFAULT_HEIGHT;
+	}
 
 	//cout << "Initializing in " << screenWidth << "x" << screenHeight << endl;
     window = SDL_CreateWindow( "MiceAmaze",
@@ -164,10 +159,10 @@ void Program::initVideo() {
 
     SDL_GL_MakeCurrent(window, glContext);
 
-	glEnable(GL_MULTISAMPLE);
+    glEnable(GL_MULTISAMPLE);
 
     // --- Enable VSync if possible ---
-    SDL_GL_SetSwapInterval(1);
+//    SDL_GL_SetSwapInterval(1);
 
     if (fullscreen) {
         SDL_SetWindowGrab(window, SDL_TRUE);
@@ -212,9 +207,6 @@ void Program::initVideo() {
 		glLoadIdentity();
 		glMatrixMode(GL_MODELVIEW);
 	}
-	initVideoCounter++;
-    loadAllTextures();
-    RenderFlatText::init();
 }
 
 // Change between window mode / fullscreen
