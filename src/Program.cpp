@@ -24,6 +24,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#endif
+#include "stb_image.h"
 
 #include "Program.h"
 #include "Game.h"
@@ -71,10 +75,16 @@ void Program::reinitVideo() {
 		SDL_DestroyWindow(window);
 		window = NULL;
 	}
+
 	if(glContext != NULL) {
 		SDL_GL_DeleteContext(glContext);
 		glContext = NULL;
 	}
+
+    RenderFlatText::lastText.clear();
+    RenderFlatText::lastW = RenderFlatText::lastH = 0;
+    RenderFlatText::textTexture = 0;
+
 	initVideo();
 	initVideoCounter++;
 	loadAllTextures();
@@ -141,7 +151,7 @@ void Program::initVideo() {
 	}
 
 	//cout << "Initializing in " << screenWidth << "x" << screenHeight << endl;
-    window = SDL_CreateWindow( "MiceAmaze",
+    window = SDL_CreateWindow( Functions::getAppName().c_str(),
                                SDL_WINDOWPOS_CENTERED,
                                SDL_WINDOWPOS_CENTERED,
                                screenWidth,
@@ -161,7 +171,7 @@ void Program::initVideo() {
 
     glEnable(GL_MULTISAMPLE);
 
-    // --- Enable VSync if possible ---
+    // --- VSync ---
 //    SDL_GL_SetSwapInterval(1);
 
     if (fullscreen) {
@@ -222,29 +232,30 @@ int Program::loadTexture(string path) {
 }
 
 int Program::loadTexture(string path, IntXY *wh) {
-	int texture = SOIL_load_OGL_texture
-			(
-					path.c_str(),
-					SOIL_LOAD_AUTO,
-					SOIL_CREATE_NEW_ID,
-					SOIL_FLAG_INVERT_Y
-			);
+    int width, height, channels;
 
-	Functions::verify(texture != 0, "could not load texture from", path.c_str());
+    stbi_set_flip_vertically_on_load(1); // same as SOIL_FLAG_INVERT_Y
 
-	// Typical Texture Generation Using Data From The Bitmap
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    unsigned char *data = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+    Functions::verify(data != nullptr, "could not load texture from", path.c_str());
 
-	if (wh != NULL) {
-		int w, h, c;
-		SOIL_free_image_data(SOIL_load_image(path.c_str(), &w, &h, &c, SOIL_LOAD_AUTO));
-		wh->x = w;
-		wh->y = h;
-	}
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
 
-	return texture;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    if (wh != NULL) {
+        wh->x = width;
+        wh->y = height;
+    }
+
+    stbi_image_free(data);
+
+    return texture;
 }
 
 void Program::run() {
@@ -292,14 +303,11 @@ void Program::run() {
 
 
 	// initialize display
-	SDL_SetWindowTitle(window, Functions::getAppName().c_str());
-
-
-	SDL_Surface *icon = SDL_LoadBMP((Program::getInstance()->dataPath + "/images/icon32.bmp").c_str());
-	if (icon) {
-	    SDL_SetWindowIcon(window, icon);
-	    SDL_FreeSurface(icon);
-	}
+//	SDL_Surface *icon = SDL_LoadBMP((Program::getInstance()->dataPath + "/images/icon32.bmp").c_str());
+//	if (icon) {
+//	    SDL_SetWindowIcon(window, icon);
+//	    SDL_FreeSurface(icon);
+//	}
 
 
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
@@ -308,7 +316,6 @@ void Program::run() {
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 //	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 0);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 1);

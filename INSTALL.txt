@@ -7,8 +7,7 @@ You need:
 - OpenGL (with headers)
 - SDL2 (with headers)
 - SDL2_mixer (with headers)
-- SOIL (with headers)
-- QuesoGLC (with headers)
+- SDL2_ttf (with headers)
 - "DejaVu" font installed
 - rsvg (only the "rsvg-convert" command is used)
 - ImageMagick (only the "convert" command is used)

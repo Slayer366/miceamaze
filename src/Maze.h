@@ -82,6 +82,7 @@ public:
 	void load(string);
 	void prepareRender(Game *game);
 	void randomizeHouses();
+	std::string getCreditString() const;
 };
 
 #endif /* MAZE_H_ */

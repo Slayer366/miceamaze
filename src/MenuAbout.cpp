@@ -43,6 +43,7 @@ MenuAbout::~MenuAbout() {
 }
 
 void MenuAbout::prepareRender() {
+
 	glLoadIdentity();
 	cursor.prepareRender();
 	glClearColor(0.2, 0.1, 0, 0);
@@ -52,37 +53,6 @@ void MenuAbout::prepareRender() {
 	hasDisplayList = true;
 	glNewList(fixedObjectsDisplayList, GL_COMPILE);
 
-	// render title
-	glLoadIdentity();
-	glTranslatef(0, .8, 0);
-	glColor3f(1, 1, 1);
-	glScalef(0.15, 0.15, 1);
-	RenderFlatText::render("About " + Functions::getAppName(), 0);
-
-
-	vector<string> lines;
-	lines.push_back(Functions::getAppName() + " " + Functions::getVersion());
-	lines.push_back(Functions::getCopyright());
-
-	string license = Functions::getLicense();
-	int a = 0, b = 0;
-	for (int i=0; i<(int) license.length(); i++) {
-		if (license[i] == '\n') {
-			b = i;
-			lines.push_back(license.substr(a, b-a));
-			a = i+1;
-		}
-	}
-
-
-	for (unsigned int i=0; i<lines.size(); i++) {
-		glLoadIdentity();
-		glTranslatef(-0.935, 0.57-0.05*i, 0);
-//		glScalef(0.04, 0.04, 1);
-		glScalef(0.063, 0.06, 1);
-		RenderFlatText::render(lines[i], -1);
-	}
-
 	glEndList();
 	Functions::clearGlErrors("MenuAbout::prepareRender");
 
@@ -90,40 +60,80 @@ void MenuAbout::prepareRender() {
 }
 
 void MenuAbout::run() {
-	vector<Button> buttons;
-	buttons.push_back(Button(-0.8, -0.9, 1.6, 0.15, "OK"));
-	int pressedButton = -1;
+    vector<Button> buttons;
+    buttons.push_back(Button(-0.8, -0.9, 1.6, 0.15, "OK"));
+    int pressedButton = -1;
 
-	// place cursor at correct position
-	cursor.setFromMouse();
+    // place cursor at correct position
+    cursor.setFromMouse();
 
-	// Prepare rendering
-	prepareRender();
+    // Prepare rendering
+    prepareRender();
 
-	while (true) {
-		if (initVideoCounter != Program::getInstance()->initVideoCounter) {
-			// Video was reinitialized, so we need to resend display lists
-			prepareRender();
-		}
+    while (true) {
+        if (initVideoCounter != Program::getInstance()->initVideoCounter) {
+            // Video was reinitialized, so we need to resend display lists
+        prepareRender();
+        }
 
-		// Rendering
-		glClear(GL_COLOR_BUFFER_BIT);
+        // Rendering
+        glClear(GL_COLOR_BUFFER_BIT);
 
-		// Render fixed parts of the maze
-		glCallList(fixedObjectsDisplayList);
+        // Render fixed parts of the maze
+        glCallList(fixedObjectsDisplayList);
 
-		// show FPS counter
-		Program::getInstance()->fps->renderInMenu();
+        // render title
+        glLoadIdentity();
+        glTranslatef(0, .8, 0);
+        glColor3f(0.1, 0.1, 0.1); // Dark shadow
+        glScalef(0.15, 0.15, 1);
+        RenderFlatText::render("About " + Functions::getAppName(), 0);
 
-		// render buttons
-		for (int b=0; b<(int) buttons.size(); b++) {
-			glLoadIdentity();
-			if (pressedButton == b) {
-				buttons[b].render(2);
-			} else {
-				buttons[b].render(buttons[b].over(cursor.x, cursor.y));
-			}
-		}
+        RenderFlatText::lastText.clear();
+        RenderFlatText::lastW = RenderFlatText::lastH = 0;
+        RenderFlatText::textTexture = 0;
+
+        glTranslatef(-0.1, +0.1, 0);
+        glColor3f(1, 1, 1);
+        RenderFlatText::render("About " + Functions::getAppName(), 0);
+
+        // render version
+        vector<string> lines;
+        lines.push_back(Functions::getAppName() + " " + Functions::getVersion());
+        lines.push_back(Functions::getCopyright());
+
+        // render license body text
+        string license = Functions::getLicense();
+        int a = 0, b = 0;
+        for (int i=0; i<(int) license.length(); i++) {
+            if (license[i] == '\n') {
+                b = i;
+                lines.push_back(license.substr(a, b-a));
+                a = i+1;
+            }
+        }
+
+        for (unsigned int i=0; i<lines.size(); i++) {
+            glLoadIdentity();
+            glTranslatef(-0.935, 0.57-0.05*i, 0);
+            //glScalef(0.04, 0.04, 1);
+            glScalef(0.057, 0.057, 1);
+            RenderFlatText::render(lines[i], -1);
+        }
+
+
+        // show FPS counter
+        Program::getInstance()->fps->renderInMenu();
+
+        // render buttons
+        for (int b = 0; b < (int)buttons.size(); b++) {
+          glLoadIdentity();
+        if (pressedButton == b) {
+            buttons[b].render(2);
+            } else {
+                buttons[b].render(buttons[b].over(cursor.x, cursor.y));
+            }
+        }
 
 		// render cursor
 		cursor.render();
@@ -176,6 +186,3 @@ void MenuAbout::run() {
 
 	}
 }
-
-
-

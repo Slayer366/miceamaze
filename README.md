@@ -18,6 +18,6 @@ Now uses current directory for data and config for portability.
 To build on Linux:
 
 ```bash
-sudo apt install libsdl2-dev libfreetype6-dev libglc-dev libsoil-dev 
+sudo apt install libsdl2-dev libsdl2-mixer-dev libsdl2-ttf-dev libfreetype6-dev
 make -j$(nproc)
 ```

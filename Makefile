@@ -12,14 +12,14 @@ MENUPATH=${PREFIX}
 ICONPATH=${PREFIX}/icons
 
 CXX      ?= g++
-CXXFLAGS += -Wall -DDATAPATH=\"${DATAPATH}\" $(shell sdl2-config --cflags)
+CXXFLAGS += -fsigned-char -Wall -DDATAPATH=\"${DATAPATH}\" $(shell sdl2-config --cflags)
 
-LDLIBS=-Wall -lGLC -lSOIL $(shell sdl2-config --libs) -lSDL2_mixer
+LDLIBS = -fsigned-char -Wall $(shell sdl2-config --libs) -lSDL2_mixer -lSDL2_ttf
 
 ifeq ($(UNAME), Darwin)
-  LDLIBS+=-framework OpenGL -lm
+  LDLIBS += -framework OpenGL -lm
 else
-  LDLIBS+=-lGL -lm
+  LDLIBS += -lGL -lm
 endif
 
 OBJS := $(sort $(patsubst src/%.cpp,src/%.o,$(wildcard src/*.cpp)))

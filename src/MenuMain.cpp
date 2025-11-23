@@ -42,6 +42,11 @@ MenuMain::~MenuMain() {
 }
 
 void MenuMain::prepareRender() {
+
+    RenderFlatText::lastText.clear();
+    RenderFlatText::lastW = RenderFlatText::lastH = 0;
+    RenderFlatText::textTexture = 0;
+
 	glLoadIdentity();
 	cursor.prepareRender();
 	glClearColor(0.2, 0.1, 0, 0);
@@ -50,20 +55,6 @@ void MenuMain::prepareRender() {
 	fixedObjectsDisplayList = glGenLists(1);
 	hasDisplayList = true;
 	glNewList(fixedObjectsDisplayList, GL_COMPILE);
-
-	// render title
-	glLoadIdentity();
-	glTranslatef(0, .55, 0);
-	glColor3f(1, 1, 1);
-	glScalef(0.25, 0.2, 1);
-	RenderFlatText::render(Functions::getAppName(), 0);
-
-	// render copyright
-	glLoadIdentity();
-	glTranslatef(0, -0.96, 0);
-//	glScalef(0.06, 0.05, 1);
-	glScalef(0.08, 0.07, 1);
-	RenderFlatText::render(Functions::getAppName() + " " + Functions::getVersion() + " by Rapha\xebl Champeimont ", 0);
 
 	glEndList();
 
@@ -105,10 +96,31 @@ void MenuMain::run() {
 		// Render fixed parts of the maze
 		glCallList(fixedObjectsDisplayList);
 
+        // render title
+        glLoadIdentity();
+        glTranslatef(0, .55, 0);
+        glColor3f(0.1, 0.1, 0.1);  // Dark shadow
+        //glScalef(0.25, 0.2, 1);
+        glScalef(0.18, 0.18, 1);
+        RenderFlatText::render(Functions::getAppName(), 0);
+
+        RenderFlatText::lastText.clear();
+        RenderFlatText::lastW = RenderFlatText::lastH = 0;
+        RenderFlatText::textTexture = 0;
+
+        glTranslatef(-0.1, +0.1, 0); // Adjust from existing glTranslatef coordinates
+        glColor3f(1, 1, 1);
+        RenderFlatText::render(Functions::getAppName(), 0);
+
+        // render copyright
+        glLoadIdentity();
+        glTranslatef(0, -0.96, 0);
+        //glScalef(0.06, 0.05, 1);
+        glScalef(0.08, 0.07, 1);
+        RenderFlatText::render(Functions::getAppName() + " " + Functions::getVersion() + " by River Champeimont ", 0);
+
 		// show FPS counter
 		Program::getInstance()->fps->renderInMenu();
-
-
 
 		// render buttons
 		for (int b=0; b<(int) buttons.size(); b++) {

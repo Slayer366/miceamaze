@@ -43,6 +43,11 @@ MenuOptions::~MenuOptions() {
 }
 
 void MenuOptions::prepareRender() {
+
+    RenderFlatText::lastText.clear();
+    RenderFlatText::lastW = RenderFlatText::lastH = 0;
+    RenderFlatText::textTexture = 0;
+
 	glLoadIdentity();
 	cursor.prepareRender();
 	glClearColor(0.2, 0.1, 0, 0);
@@ -51,41 +56,6 @@ void MenuOptions::prepareRender() {
 	fixedObjectsDisplayList = glGenLists(1);
 	hasDisplayList = true;
 	glNewList(fixedObjectsDisplayList, GL_COMPILE);
-
-	// render title
-	glLoadIdentity();
-	glTranslatef(0, .8, 0);
-	glColor3f(1, 1, 1);
-	glScalef(0.15, 0.15, 1);
-	RenderFlatText::render("Options", 0);
-
-	string optionsNames[] = {"Display mode", "FPS in game", "Show FPS", "Music", "Sound"};
-
-	//for (int i=0; i<5; i++) {
-	for (int i=0; i<4; i++) {
-		float y = 0.4-0.2*i;
-		glLoadIdentity();
-		if (i == 0) {
-			glColor3f(0, 0, 0.3);
-		} else if (i == 1) {
-			glColor3f(0, 0.3, 0);
-		} else if (i == 2) {
-			glColor3f(0.3, 0, 0);
-		} else if (i == 3) {
-			glColor3f(0.3, 0.3, 0);
-		} else if (i == 4) {
-			glColor3f(0.3, 0, 0.4);
-		}
-		Functions::drawSquare(-1, y-0.05, 2, 0.2);
-
-		glLoadIdentity();
-		glTranslatef(-0.9, y+0.01, 0);
-//		glScalef(0.06, 0.06, 1);
-		glScalef(0.08, 0.08, 1);
-		glColor3f(1, 1, 1);
-		RenderFlatText::render(optionsNames[i]);
-	}
-
 
 	glEndList();
 
@@ -185,6 +155,48 @@ void MenuOptions::run() {
 
 		// Render fixed parts of the maze
 		glCallList(fixedObjectsDisplayList);
+
+        // render title
+        glLoadIdentity();
+        glTranslatef(0, .8, 0);
+        glColor3f(0.1, 0.1, 0.1);  // Dark shadow
+        glScalef(0.15, 0.15, 1);
+        RenderFlatText::render("Options", 0);
+
+        RenderFlatText::lastText.clear();
+        RenderFlatText::lastW = RenderFlatText::lastH = 0;
+        RenderFlatText::textTexture = 0;
+
+        glTranslatef(-0.1, +0.1, 0); // Adjust from existing glTranslatef coordinates
+        glColor3f(1, 1, 1);
+        RenderFlatText::render("Options", 0);
+
+        string optionsNames[] = {"Display mode", "FPS in game", "Show FPS", "Music", "Sound"};
+
+        //for (int i=0; i<5; i++) {
+        for (int i=0; i<4; i++) {
+            float y = 0.4-0.2*i;
+            glLoadIdentity();
+            if (i == 0) {
+                glColor3f(0, 0, 0.3);
+            } else if (i == 1) {
+                glColor3f(0, 0.3, 0);
+            } else if (i == 2) {
+                glColor3f(0.3, 0, 0);
+            } else if (i == 3) {
+                glColor3f(0.3, 0.3, 0);
+            } else if (i == 4) {
+                glColor3f(0.3, 0, 0.4);
+            }
+            Functions::drawSquare(-1, y-0.05, 2, 0.2);
+
+            glLoadIdentity();
+            glTranslatef(-0.9, y+0.01, 0);
+            //glScalef(0.06, 0.06, 1);
+            glScalef(0.08, 0.08, 1);
+            glColor3f(1, 1, 1);
+            RenderFlatText::render(optionsNames[i]);
+        }
 
 		// show FPS counter
 		Program::getInstance()->fps->renderInMenu();

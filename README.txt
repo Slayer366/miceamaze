@@ -7,8 +7,7 @@ You need:
 - OpenGL
 - SDL2
 - SDL2_mixer
-- SOIL
-- QuesoGLC
+- SDL2_ttf
 - DejaVu font installed
 - rsvg (sudo apt install librsvg2-bin)
 

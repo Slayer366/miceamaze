@@ -43,6 +43,11 @@ MenuPlayers::~MenuPlayers() {
 }
 
 void MenuPlayers::prepareRender() {
+
+	RenderFlatText::lastText.clear();
+	RenderFlatText::lastW = RenderFlatText::lastH = 0;
+	RenderFlatText::textTexture = 0;
+
 	glLoadIdentity();
 	cursor.prepareRender();
 	glClearColor(0.2, 0.1, 0, 0);
@@ -51,26 +56,6 @@ void MenuPlayers::prepareRender() {
 	fixedObjectsDisplayList = glGenLists(1);
 	hasDisplayList = true;
 	glNewList(fixedObjectsDisplayList, GL_COMPILE);
-
-	// render title
-	glLoadIdentity();
-	glTranslatef(0, .8, 0);
-	glColor3f(1, 1, 1);
-	glScalef(0.15, 0.15, 1);
-	RenderFlatText::render("Select players", 0);
-
-	// Render buttons background and text
-	for (int i=0; i<4; i++) {
-		glLoadIdentity();
-		Program::getInstance()->playerColors[i].gl();
-		Functions::drawSquare(-1, buttons[firstControlButton()+i*4].y-0.05, 2, 0.2);
-
-		glLoadIdentity();
-		glTranslatef(-0.9, buttons[firstControlButton()+i*4].y+0.01, 0);
-		glScalef(0.08, 0.08, 1);
-		glColor3f(0, 0, 0);
-		RenderFlatText::render(string("Player ") + Functions::toString(i+1));
-	}
 
 	glEndList();
 
@@ -83,7 +68,8 @@ void MenuPlayers::run() {
 	const float textSizeFactor = 0.75;
 	for (int i=0; i<4; i++) {
 		buttons.push_back(Button(-0.6, 0.4-0.2*i, 0.2, 0.10, "Mouse", textSizeFactor));
-		buttons.push_back(Button(-0.3, 0.4-0.2*i, 0.5, 0.10, "Keys (IJKL+arrows)", textSizeFactor));
+		//buttons.push_back(Button(-0.3, 0.4-0.2*i, 0.5, 0.10, "Keys (IJKL+arrows)", textSizeFactor));
+		buttons.push_back(Button(-0.32, 0.4-0.2*i, 0.55, 0.10, "Keys (IJKL+arrows)", textSizeFactor));
 		buttons.push_back(Button(0.3, 0.4-0.2*i, 0.2, 0.10, "AI", textSizeFactor));
 		buttons.push_back(Button(0.6, 0.4-0.2*i, 0.2, 0.10, "None", textSizeFactor));
 	}
@@ -107,6 +93,34 @@ void MenuPlayers::run() {
 
 		// Render fixed parts of the maze
 		glCallList(fixedObjectsDisplayList);
+
+        // render title
+        glLoadIdentity();
+        glTranslatef(0, .8, 0);
+        glColor3f(0.1, 0.1, 0.1);  // Dark shadow
+        glScalef(0.15, 0.15, 1);
+        RenderFlatText::render("Select players", 0);
+
+        RenderFlatText::lastText.clear();
+        RenderFlatText::lastW = RenderFlatText::lastH = 0;
+        RenderFlatText::textTexture = 0;
+
+        glTranslatef(-0.1, +0.1, 0); // Adjust from existing glTranslatef coordinates
+        glColor3f(1, 1, 1);
+        RenderFlatText::render("Select players", 0);
+
+        // Render buttons background and text
+        for (int i=0; i<4; i++) {
+            glLoadIdentity();
+            Program::getInstance()->playerColors[i].gl();
+            Functions::drawSquare(-1, buttons[firstControlButton()+i*4].y-0.05, 2, 0.2);
+
+		    glLoadIdentity();
+            glTranslatef(-0.9, buttons[firstControlButton()+i*4].y+0.01, 0);
+            glScalef(0.08, 0.08, 1);
+            glColor3f(0, 0, 0);
+            RenderFlatText::render(string("Player ") + Functions::toString(i+1));
+        }
 
 		// show FPS counter
 		Program::getInstance()->fps->renderInMenu();

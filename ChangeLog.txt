@@ -60,7 +60,7 @@ New in version 1.6.2:
   * Linux version: Remove SOIL directory
 
 New in version 1.6.1
-  * Linux version: Render fonts at runtime using libglc
+  * Linux version: Render fonts at runtime using libsdl2-ttf
   * Linux version: Depend on ttf-dejavu-core instead of providing the font
   * Linux version: Install Debian menu and Freedesktop menu entries
   * Linux version: Depend on libsoil package instead of compiling it

@@ -222,11 +222,13 @@ void Maze::prepareRender(Game *game) {
 		spawner->render();
 	}
 
+/*
+	// Moved to Game.cpp
 	// show maze credit
 	if (game != NULL) {
 		glLoadMatrixf(modelMatrix);
 		glTranslatef(-0.2, -0.98, 0);
-//		glScalef(0.06, 0.05, 1);
+		//glScalef(0.06, 0.05, 1);
 		glScalef(0.075, 0.065, 1);
 		glColor3f(0.8, 0.7, 0.4);
 		if (description.length() == 0) {
@@ -235,9 +237,15 @@ void Maze::prepareRender(Game *game) {
 			RenderFlatText::render(name + " - " + description, 0);
 		}
 	}
-
+*/
 
 	glEndList();
+}
+
+std::string Maze::getCreditString() const {
+    if (description.empty())
+        return name;
+    return name + " - " + description;
 }
 
 // game argument may be NULL

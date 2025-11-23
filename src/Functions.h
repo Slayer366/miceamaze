@@ -48,6 +48,7 @@
 #include <vector>
 #include <algorithm>
 #include <limits.h>
+#include <map>
 
 #ifdef _WIN32
 // Windows
@@ -77,24 +78,8 @@
 #include <SDL2/SDL_opengl.h>
 #endif
 
-// SOIL
-#ifndef _WIN32
-#include "SOIL/SOIL.h"
-#else
-#include "SOIL.h"
-#endif
-
-#ifdef _WIN32
-#define FONT_WIN
-#else
-#define FONT_GLC
-#endif
-
-#ifdef FONT_GLC
-// GLC
-#include "GL/glc.h"
-#endif
-
+// SDL2_ttf
+#include <SDL2/SDL_ttf.h>
 
 // Very basic dependency-free internal headers
 #include "Version.h"
@@ -113,11 +98,8 @@ public:
 	static string getVersion() {
 		return VERSION;
 	}
-	//static string getCopyrightASCII() {
-	//	return "(c) 2012-2014 River Champeimont";
-	//}
 	static string getCopyright() {
-		return "\xa9 2012-2014 Rapha\xebl Champeimont";
+		return "(c) 2012-2014 River Champeimont";
 	}
 	static string getLicense();
 

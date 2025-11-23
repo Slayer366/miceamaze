@@ -30,26 +30,18 @@
 
 #include "Functions.h"
 
-
 class RenderFlatText {
-#ifdef FONT_WIN
-	static GLuint base;
-	static GLYPHMETRICSFLOAT gmf[256];
-	static HDC hDC;
-	static HFONT font;
-#else
-#ifdef FONT_GLC
-	static GLint ctx, defaultFont;
-#endif
-#endif
 public:
 	static void init();
 	static void reinit();
-	static void render(string s) {
-		render(s, -1);
-	}
-	static void render(string s, int align);
-};
 
+    static void render(std::string s) { render(s, -1); }
+    static void render(std::string s, int align);
+
+    static TTF_Font* defaultFont;
+    static GLuint textTexture;
+    static std::string lastText;
+    static int lastW, lastH;
+};
 
 #endif

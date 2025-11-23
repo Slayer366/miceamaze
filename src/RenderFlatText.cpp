@@ -27,167 +27,197 @@
 #include "RenderFlatText.h"
 #include "Program.h"
 
-//#undef FONT_GLC
+static constexpr float FONT_NDC_SCALE = 10.0f;
 
-#ifdef FONT_WIN
-GLuint RenderFlatText::base = 0;
-GLYPHMETRICSFLOAT RenderFlatText::gmf[256];
-HDC RenderFlatText::hDC;
-HFONT RenderFlatText::font;
-#else
-#ifdef FONT_GLC
-GLint RenderFlatText::ctx;
-GLint RenderFlatText::defaultFont;
-#endif
-#endif
+TTF_Font *RenderFlatText::defaultFont = nullptr;
+GLuint RenderFlatText::textTexture = 0;
+std::string RenderFlatText::lastText = "";
+int RenderFlatText::lastW = 0;
+int RenderFlatText::lastH = 0;
+
+// Helper: compute a "sensible" point size from the current window/viewport height.
+// Adjust multiplier to taste. Using viewport height ensures text scales with resolution.
+static int compute_point_size_from_window() {
+    // Get current window pixel height.
+    SDL_Window *w = Program::getInstance()->window;
+    int h = 480;
+    if (w) {
+        SDL_GetWindowSize(w, NULL, &h); // Window drawable size in pixels
+    } else {
+        h = Program::getInstance()->screenHeight > 0 ? Program::getInstance()->screenHeight : h;
+    }
+    // pointSize fraction of window height. Tweak 0.055 if you want default glyphs bigger/smaller.
+    int pts = (int)roundf((float)h * 0.055f);
+    if (pts < 8) pts = 8;
+    return pts;
+}
 
 void RenderFlatText::init() {
-#ifdef FONT_WIN
-	hDC = GetDC(NULL);
-	if (AddFontResourceExA(
-			(Program::getInstance()->dataPath + "/fonts/DejaVuSans.ttf").c_str(),
-			FR_PRIVATE,
-			NULL) == 0) {
-		Functions::error("error loading font (AddFontResourceExA)");
-	}
-	font = CreateFont(  0,								// Height Of Font
-						0,								// Width Of Font
-						0,								// Angle Of Escapement
-						0,								// Orientation Angle
-						FW_NORMAL,						// Font Weight
-						FALSE,							// Italic
-						FALSE,							// Underline
-						FALSE,							// Strikeout
-						ANSI_CHARSET,					// Character Set Identifier
-						OUT_TT_PRECIS,					// Output Precision
-						CLIP_DEFAULT_PRECIS,			// Clipping Precision
-						ANTIALIASED_QUALITY,			// Output Quality
-						FF_DONTCARE|DEFAULT_PITCH,		// Family And Pitch
-						"DejaVu Sans");						// Font Name
-
-	if (font == NULL) {
-		Functions::error("error loading font (CreateFont)");
-	}
-
-	Functions::verify(SelectObject(hDC, font) != NULL, "error loading font (SelectObject)"); // Selects The Font We Created
-
-	reinit();
-#else
-#ifdef FONT_GLC
-	ctx = glcGenContext();
-	glcContext(ctx);
-
-	glcEnable(GLC_GL_OBJECTS);
-	//glcDisable(GLC_GL_OBJECTS);
-	glcEnable(GLC_MIPMAP);
-	glcEnable(GLC_HINTING_QSO);
-	glcEnable(GLC_KERNING_QSO);
-	glcRenderStyle(GLC_TRIANGLE);
-
 	glEnable(GL_POLYGON_SMOOTH);
-//	glEnable(GL_LINE_SMOOTH);
-//	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//	glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_ONE);
 
-	defaultFont = glcGenFontID();
-	glcAppendCatalog((Program::getInstance()->dataPath + "/fonts").c_str());
-	Functions::verify(glcNewFontFromFamily(defaultFont, "DejaVu Sans"), "could not load font (glcNewFontFromFamily error)");
-	Functions::verify(glcFontFace(defaultFont, "Book") == GL_TRUE, "could not load font (glcFontFace error)");
-	glcFont(defaultFont);
-#endif
-#endif
+    if (TTF_WasInit() == 0) {
+        if (TTF_Init() < 0) {
+            Functions::fatalError(std::string("TTF_Init failed: ") + TTF_GetError());
+            SDL_Quit();
+        }
+    }
+
+	string fontPath = Program::getInstance()->dataPath + "/fonts/DejaVuSans.ttf";
+
+    // compute dynamic point size from current window/viewport
+    int pointSize = compute_point_size_from_window();
+
+    if (!defaultFont) {
+        defaultFont = TTF_OpenFont(fontPath.c_str(), pointSize);
+    } else if (!defaultFont) {
+        Functions::fatalError(std::string("Failed to load font: ") + TTF_GetError());
+    }
 }
 
 void RenderFlatText::reinit() {
-#ifdef FONT_WIN
-	base = glGenLists(256);								// Storage For 256 Characters
-	{
-		int c = glGetError();
-		if (c != GL_NO_ERROR) {
-			Functions::error(string("GL error = ") + Functions::toString(c));
-		}
-	}
-	if (!wglUseFontOutlines(hDC,						// Select The Current DC
-						0,								// Starting Character
-						256,							// Number Of Display Lists To Build
-						base,							// Starting Display Lists
-						0.0f,							// Deviation From The True Outlines
-						0.0f,							// Font Thickness In The Z Direction
-						WGL_FONT_POLYGONS,				// Use Polygons, Not Lines
-						gmf)) {
-		Functions::error("error loading font (wglUseFontOutlines)");
-	}
-#endif
-#ifdef FONT_GLC
-    ctx = glcGenContext();
-    glcContext(ctx);
-
-	glcEnable(GLC_GL_OBJECTS);
-	glcEnable(GLC_MIPMAP);
-	glcEnable(GLC_HINTING_QSO);
-	glcEnable(GLC_KERNING_QSO);
-	glcRenderStyle(GLC_TRIANGLE);
-
 	glEnable(GL_POLYGON_SMOOTH);
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	defaultFont = glcGenFontID();
-	glcAppendCatalog((Program::getInstance()->dataPath + "/fonts").c_str());
-	Functions::verify(glcNewFontFromFamily(defaultFont, "DejaVu Sans"), "could not load font (glcNewFontFromFamily error)");
-	Functions::verify(glcFontFace(defaultFont, "Book") == GL_TRUE, "could not load font (glcFontFace error)");
-	glcFont(defaultFont);
-#endif
+    if (defaultFont) {
+        TTF_CloseFont(defaultFont);
+        defaultFont = nullptr;
+    }
+
+    if (textTexture) {
+        glDeleteTextures(1, &textTexture);
+        textTexture = 0;
+        lastText.clear();
+        lastW = lastH = 0;
+    }
+
+    init();
 }
 
 // align: -1 = left (original position = left of the text)
 // align:  0 = center (original position = middle of the text)
 // align:  1 = right (original position = right of the text)
 void RenderFlatText::render(string s, int align) {
-	if (s.length() == 0) return;
-#ifdef FONT_WIN
-	glScalef(1.2*0.75, 1.2, 1);
 
-	if (align == 0 || align == 1) {
-		float delta = 0;
-		for (unsigned i=0; i<s.length(); i++) {
-			int k = s[i];
-			if (k < 0) k += 256;
-			if (k >= 256) continue;
-			delta += gmf[k].gmfCellIncX;
-		}
-		if (align == 1) {
-			glTranslatef(-delta, 0, 0);
-		} else if (align == 0) {
-			glTranslatef(-delta/2, 0, 0);
-		}
-	}
+    if (s.length() == 0) {
+        return;
+    }
 
-	//glPushAttrib(GL_LIST_BIT);
-	glListBase(base);
-	glCallLists(s.length(), GL_UNSIGNED_BYTE, s.c_str());
-	//glPopAttrib();
-#else
-#ifdef FONT_GLC
-	glScalef(0.75, 1, 1);
+    // Measure the text in pixels (similar to GLC string metric)
+    GLint px_w = 0, px_h = 0;
+    if (TTF_SizeUTF8(defaultFont, s.c_str(), &px_w, &px_h) != 0) {
+        return;
+    }
 
-	if (align == 0 || align == 1) {
-		glcMeasureString(GL_FALSE, s.c_str());
-		GLfloat box[8];
-		glcGetStringMetric(GLC_BOUNDS, box);
-		float delta = box[2] - box[0];
-		if (align == 1) {
-			glTranslatef(-delta, 0, 0);
-		} else if (align == 0) {
-			glTranslatef(-delta/2, 0, 0);
-		}
-	}
+    int outW, outH;
 
-	glcRenderString(s.c_str());
-#endif
-#endif
+    std::string cacheKey;
+    {
+        // pointer as hex + text
+        std::ostringstream oss;
+        oss << reinterpret_cast<void*>(defaultFont) << "|" << s;
+        cacheKey = oss.str();
+    }
+    if (textTexture != 0 && cacheKey == RenderFlatText::lastText) {
+        outW = RenderFlatText::lastW;
+        outH = RenderFlatText::lastH;
+        return; // Also stops leak
+    }
+
+    SDL_Color white = {255,255,255,255};
+    SDL_Surface *surf = TTF_RenderUTF8_Blended(defaultFont, s.c_str(), white);
+    if (!surf) {
+        return;
+    }
+
+    SDL_Surface *surf_conv = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_RGBA32, 0);
+    SDL_FreeSurface(surf);
+    if (!surf_conv) {
+        return;
+    }
+
+    // delete previous texture if exists
+//    if (textTexture != 0) {
+//        glDeleteTextures(1, &textTexture);
+//        textTexture = 0;
+//    }
+
+//    glGenTextures(1, &textTexture);
+    glBindTexture(GL_TEXTURE_2D, textTexture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // ensure tight packing for arbitrary width
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surf_conv->w, surf_conv->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surf_conv->pixels);
+
+    // restore previous unpack alignment if necessary
+//    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+    outW = surf_conv->w;
+    outH = surf_conv->h;
+
+    // cache key: store the font pointer + string so different fonts don't reuse same texture
+    RenderFlatText::lastText = cacheKey;
+    RenderFlatText::lastW = outW;
+    RenderFlatText::lastH = outH;
+
+    SDL_FreeSurface(surf_conv);
+
+    // Query viewport to map pixel-size texture -> normalized coordinates used by UI.
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    const float vpW = (float)vp[2];
+    const float vpH = (float)vp[3];
+
+    // Convert pixel dimensions to normalized (-1..1) units: text_ndc = (pixels / vp) * 2
+    // Caller is using coordinates where full width = 2 units (-1..1), so this matches.
+    const float px_to_ndc = (2.0f / vpW) * FONT_NDC_SCALE; // multiply X by px_to_ndc to get NDC units
+    const float py_to_ndc = (2.0f / vpH) * FONT_NDC_SCALE;
+
+    const float w_ndc = ((float)px_w) * px_to_ndc;
+    const float h_ndc = ((float)px_h) * py_to_ndc;
+
+    // Save some GL state
+    glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_TEXTURE_BIT);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textTexture);
+
+    // We do not alter the projection. DRAW IN CURRENT MODELVIEW SPACE.
+    // Apply alignment in modelview (so it composes naturally with caller's translate/scale)
+    glPushMatrix();
+
+    if (align == 0 || align == 1) {
+        if (align == 1) {
+        // align:  1 = right (original position = right of the text)
+        glTranslatef(-w_ndc, 0.0f, 0.0f);
+        } else if (align == 0) {
+        // align:  0 = center (original position = middle of the text)
+        glTranslatef(-w_ndc * 0.5f, -0.25f, 0.0f);
+        }
+    } else if (align == -1) {
+      // align: -1 = left (original position = left of the text)
+      glTranslatef(0.0f, 0.0f, 0.0f);
+    }
+
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f,     0.0f);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(w_ndc,    0.0f);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(w_ndc,    h_ndc);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f,     h_ndc);
+    glEnd();
+
+    glPopMatrix();
+    glPopAttrib();
 }

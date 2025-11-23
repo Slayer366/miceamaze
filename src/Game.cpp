@@ -179,8 +179,8 @@ void Game::run() {
 	buttons.push_back(Button(-0.7, -0.8, 1.4, 0.15, "Back to main menu"));
 	buttons[buttons.size()-1].shown = false; // hidden before game end
 
-	buttons.push_back(Button(0.6, -0.4, 0.3, 0.10, "Pause", 0.75));
-	buttons.push_back(Button(0.6, -0.55, 0.3, 0.10, "Stop game", 0.75));
+	buttons.push_back(Button(0.6, -0.4, 0.35, 0.12, "Pause", 0.8));
+	buttons.push_back(Button(0.6, -0.55, 0.35, 0.12, "Stop game", 0.8));
 
 
 	cursor.setFromMouse();
@@ -193,7 +193,7 @@ void Game::run() {
 	// Save maze as last maze
 	//maze.save(Program::getInstance()->config.path + "/tmp_last_maze.txt");
 
-// Random house placement
+    // Random house placement
 	maze.randomizeHouses();
 
 	for (int h = 0; h < (int)maze.houses.size(); h++)
@@ -265,13 +265,22 @@ void Game::run() {
 		// Maze rendering
 		maze.render(this);
 
+        // Show Maze Credit
+        glLoadIdentity();
+        glTranslatef(-0.2, -0.98, 0);
+        glScalef(0.075, 0.065, 1);
+        glColor3f(0.8, 0.7, 0.4);
+        RenderFlatText::lastText.clear();
+        RenderFlatText::textTexture = 0;
+        RenderFlatText::render(maze.getCreditString(), 0);
 
 		// show scores
 		for (int p=0; p<players; p++) {
 			if (MenuPlayers::playerControls[p] != 3) {
 				glLoadIdentity();
 				glTranslatef(0.9, 0.6-0.15*p, 0);
-				glScalef(0.2, 0.15, 1);
+				//glScalef(0.2, 0.15, 1);
+				glScalef(0.15, 0.15, 1);
 				Program::getInstance()->playerColors[p].gl();
 				RenderFlatText::render(Functions::toString(scores[p]), 1);
 			}
@@ -281,7 +290,8 @@ void Game::run() {
 		// show remaining time
 		glLoadIdentity();
 		glTranslatef(0.58, 0.8, 0);
-		glScalef(0.2, 0.15, 1);
+		//glScalef(0.2, 0.15, 1);
+		glScalef(0.15, 0.15, 1);
 		glColor3f(1, 1, 1);
 		int remainingTime = timeLimit - time;
 		int remainingTimeSec = Functions::roundCeil((remainingTime)/100.0f);
@@ -324,8 +334,17 @@ void Game::run() {
 		if (pause) {
 			glLoadIdentity();
 			glTranslatef(0, -0.1, 0);
+			glColor3f(0.2, 0.2, 0.2);  // Medium shadow
+			//glScalef(0.5, 0.5, 1);
+			glScalef(0.3, 0.3, 1);
+			RenderFlatText::render("PAUSE", 0);
+
+			RenderFlatText::lastText.clear();
+			RenderFlatText::lastW = RenderFlatText::lastH = 0;
+			RenderFlatText::textTexture = 0;
+
+			glTranslatef(-0.08, +0.08, 0); // Adjust from existing glTranslatef coordinates
 			glColor3f(1, 1, 1);
-			glScalef(0.5, 0.5, 1);
 			RenderFlatText::render("PAUSE", 0);
 		}
 

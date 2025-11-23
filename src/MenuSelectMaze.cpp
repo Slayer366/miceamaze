@@ -102,7 +102,7 @@ void MenuSelectMaze::searchMazes() {
 	}
 }
 
-// Load mazed  but don't prepare render
+// Load maze but don't prepare render
 void MenuSelectMaze::loadMazes() {
 	// Clear currently loaded mazed
 	for (unsigned k=0; k<mazes.size(); k++) {
@@ -205,7 +205,7 @@ void MenuSelectMaze::run() {
 						// show maze name
 						translateForMazeRender(i, j);
 						glTranslatef(-0.2475, -1.2, 0);
-//						glScalef(0.2, 0.2, 1);
+						//glScalef(0.2, 0.2, 1);
 						glScalef(0.26, 0.26, 1);
 						glColor3f(1, 1, 1);
 						RenderFlatText::render(mazes[m]->name, 0);
@@ -218,8 +218,16 @@ void MenuSelectMaze::run() {
 		// render title
 		glLoadIdentity();
 		glTranslatef(0, .8, 0);
-		glColor3f(1, 1, 1);
+		glColor3f(0.1, 0.1, 0.1);  // Dark shadow
 		glScalef(0.15, 0.15, 1);
+		RenderFlatText::render("Select maze", 0);
+
+		RenderFlatText::lastText.clear();
+		RenderFlatText::lastW = RenderFlatText::lastH = 0;
+		RenderFlatText::textTexture = 0;
+
+		glTranslatef(-0.1, +0.1, 0); // Adjust from existing glTranslatef coordinates
+		glColor3f(1, 1, 1);
 		RenderFlatText::render("Select maze", 0);
 
 		// make next page and previous page button exist only if needed

@@ -43,6 +43,11 @@ HowToPlay::~HowToPlay() {
 }
 
 void HowToPlay::prepareRender() {
+
+	RenderFlatText::lastText.clear();
+	RenderFlatText::lastW = RenderFlatText::lastH = 0;
+	RenderFlatText::textTexture = 0;
+
 	glLoadIdentity();
 	cursor.prepareRender();
 	glClearColor(0.2, 0.1, 0, 0);
@@ -51,46 +56,6 @@ void HowToPlay::prepareRender() {
 	fixedObjectsDisplayList = glGenLists(1);
 	hasDisplayList = true;
 	glNewList(fixedObjectsDisplayList, GL_COMPILE);
-
-	// render title
-	glLoadIdentity();
-	glTranslatef(0, .8, 0);
-	glColor3f(1, 1, 1);
-	glScalef(0.15, 0.15, 1);
-	RenderFlatText::render("How to play", 0);
-
-	// render version
-	vector<string> lines;
-	lines.push_back("Mice will appear continuously.");
-	lines.push_back("Bring more mice to your house than other players before time runs out.");
-	lines.push_back("");
-	lines.push_back("Arrows: If you play using your mouse, you have 2 ways to place arrows:");
-	lines.push_back(" - either use left-click/right-click/wheel-up/wheel-down,");
-	lines.push_back(" - or click and maintain pressed then move in one direction and release.");
-	lines.push_back("With the keyboard, arrows move the cursor and I,J,K,L place arrows.");
-	lines.push_back("In any case, you cannot have more than 3 arrows at the same time.");
-	lines.push_back("");
-	lines.push_back("Snakes will eat mice until they get sick of eating too much and die.");
-	lines.push_back("If a snake reaches your house, you lose 10 points.");
-	lines.push_back("");
-	lines.push_back("The golden mouse will trigger a special event for 10 seconds. These are:");
-	lines.push_back(" - Mouse Mania (much more mice appear),");
-	lines.push_back(" - Snake Attack (many snakes appear),");
-	lines.push_back(" - Color Madness (new mice are randomly colored),");
-	lines.push_back(" - Eagle (you get the eagle which protects you from snakes),");
-	lines.push_back(" - Black Death (mice are sick).");
-	lines.push_back(" - Drill mice (see below).");
-	lines.push_back("");
-	lines.push_back("Sick mice make you lose 1 point if they reach your house.");
-	lines.push_back("");
-	lines.push_back("A drill mouse destroys one wall, then becomes a normal mouse.");
-	for (unsigned int i=0; i<lines.size(); i++) {
-		glLoadIdentity();
-		glTranslatef(-0.83, 0.67-0.06*i, 0);
-//		glScalef(0.05, 0.05, 1);
-		glScalef(0.067, 0.067, 1);
-		RenderFlatText::render(lines[i], -1);
-	}
 
 	glEndList();
 
@@ -119,6 +84,55 @@ void HowToPlay::run() {
 
 		// Render fixed parts of the maze
 		glCallList(fixedObjectsDisplayList);
+
+        // render title
+        glLoadIdentity();
+        glTranslatef(0, .8, 0);
+        glColor3f(0.1, 0.1, 0.1);  // Dark shadow
+        glScalef(0.15, 0.15, 1);
+        RenderFlatText::render("How to play", 0);
+
+        RenderFlatText::lastText.clear();
+        RenderFlatText::lastW = RenderFlatText::lastH = 0;
+        RenderFlatText::textTexture = 0;
+
+        glTranslatef(-0.1, +0.1, 0);  // Adjust from existing glTranslatef coordinates
+        glColor3f(1, 1, 1);
+        RenderFlatText::render("How to play", 0);
+
+        // render version and body text
+        vector<string> lines;
+        lines.push_back("Mice will appear continuously.");
+        lines.push_back("Bring more mice to your house than other players before time runs out.");
+        lines.push_back("");
+        lines.push_back("Arrows: If you play using your mouse, you have 2 ways to place arrows:");
+        lines.push_back(" - either use left-click/right-click/wheel-up/wheel-down,");
+        lines.push_back(" - or click and maintain pressed then move in one direction and release.");
+        lines.push_back("With the keyboard, arrows move the cursor and I,J,K,L place arrows.");
+        lines.push_back("In any case, you cannot have more than 3 arrows at the same time.");
+        lines.push_back("");
+        lines.push_back("Snakes will eat mice until they get sick of eating too much and die.");
+        lines.push_back("If a snake reaches your house, you lose 10 points.");
+        lines.push_back("");
+        lines.push_back("The golden mouse will trigger a special event for 10 seconds. These are:");
+        lines.push_back(" - Mouse Mania (much more mice appear),");
+        lines.push_back(" - Snake Attack (many snakes appear),");
+        lines.push_back(" - Color Madness (new mice are randomly colored),");
+        lines.push_back(" - Eagle (you get the eagle which protects you from snakes),");
+        lines.push_back(" - Black Death (mice are sick).");
+        lines.push_back(" - Drill mice (see below).");
+        lines.push_back("");
+        lines.push_back("Sick mice make you lose 1 point if they reach your house.");
+        lines.push_back("");
+        lines.push_back("A drill mouse destroys one wall, then becomes a normal mouse.");
+        for (unsigned int i=0; i<lines.size(); i++) {
+            glLoadIdentity();
+            //glTranslatef(-0.83, 0.67-0.06*i, 0);
+            glTranslatef(-0.83, 0.65-0.06*i, 0);
+            //glScalef(0.05, 0.05, 1);
+            glScalef(0.061, 0.067, 1);
+            RenderFlatText::render(lines[i], -1);
+        }
 
 		// show FPS counter
 		Program::getInstance()->fps->renderInMenu();
