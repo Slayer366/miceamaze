@@ -11,7 +11,7 @@ Has been converted to SDL2
 
 Text/font size has been increased for visibility on low-res devices.
 
-MSAA x1 has also been enabled to make text more visible on low-res.
+MSAA has been enabled to make text more visible on low-res.
 
 Now uses current directory for data and config for portability.
 

@@ -318,7 +318,7 @@ void Program::run() {
 //	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 0);
 
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 1);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
 	// Init video
 	initVideo();
